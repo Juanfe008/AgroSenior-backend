@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { TextoGuia, Card } from '@prisma/client';
+import { NotFoundException } from '@nestjs/common'; 
 
 @Injectable()
 export class TextoGuiaService {
@@ -28,5 +29,21 @@ export class TextoGuiaService {
             include: { cards: true },
         });
     }
+
+    // Obtener una guía específica por su ID
+    async findOneGuide(id: number): Promise<TextoGuia> {
+        const guide = await this.prisma.textoGuia.findUnique({
+            where: { id },
+            include: { cards: true }, // Incluir las tarjetas asociadas
+        });
+
+        if (!guide) {
+            throw new NotFoundException(`Guía con ID ${id} no encontrada.`);
+        }
+
+        return guide;
+    }
+
+
 }
 
