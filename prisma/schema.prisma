@@ -13,17 +13,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model TextoGuia {
+model Nivel {
   id Int @id @default(autoincrement())
-  title   String
-  cards   Card[]  
+  textosGuias TextoGuia[]
+}
+
+model TextoGuia {
+  id    Int    @id @default(autoincrement())
+  title String
+  desc  String
+  cards Card[]
+  nivelId Int?
+  nivel    Nivel? @relation(fields: [nivelId], references: [id], onDelete: Cascade)
 }
 
 model Card {
-  id        Int     @id @default(autoincrement())
-  title     String
-  content   String
-  imageUrl  String? 
-  guideId   Int
-  guide     TextoGuia   @relation(fields: [guideId], references: [id], onDelete: Cascade) 
+  id       Int       @id @default(autoincrement())
+  title    String
+  content  String
+  imageUrl String?
+  guideId  Int
+  guide    TextoGuia @relation(fields: [guideId], references: [id], onDelete: Cascade)
 }

@@ -15,9 +15,14 @@ export class TextoGuiaController {
         return this.textosGuiasService.findOneGuide(+id);
     }
 
+    @Get('nivel/:nivelId') 
+    findGuidesByNivel(@Param('nivelId') nivelId: string) {
+        return this.textosGuiasService.findGuidesByNivel(+nivelId);
+    }
+
     @Post()
-    createGuide(@Body() body: { title: string, cards: { title: string, content: string, imageUrl?: string }[] }) {
-        return this.textosGuiasService.createGuideWithCards(body.title, body.cards);
+    createGuide(@Body() body: { title: string, desc: string, cards: { title: string, content: string, imageUrl?: string }[], nivelId: number }) {
+        return this.textosGuiasService.createGuideWithCards(body.title, body.desc, body.cards, body.nivelId);
     }
 }
 

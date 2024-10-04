@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { TextoGuia, Card } from '@prisma/client';
-import { NotFoundException } from '@nestjs/common'; 
+import { TextoGuia } from '@prisma/client';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class TextoGuiaService {
     constructor(private prisma: PrismaService) { }
 
-    async createGuideWithCards(title: string, cards: { title: string, content: string, imageUrl?: string }[]): Promise<TextoGuia> {
+    async createGuideWithCards(title: string, desc: string, cards: { title: string, content: string, imageUrl?: string }[], nivelId: number): Promise<TextoGuia> {
         return this.prisma.textoGuia.create({
             data: {
                 title,
+                desc,
                 cards: {
                     create: cards.map(card => ({
                         title: card.title,
@@ -18,19 +19,16 @@ export class TextoGuiaService {
                         imageUrl: card.imageUrl || null,
                     })),
                 },
+                nivelId
             },
             include: { cards: true },
         });
     }
 
-    // Obtener todas las guías con sus cards
     async findAllGuides(): Promise<TextoGuia[]> {
-        return this.prisma.textoGuia.findMany({
-            include: { cards: true },
-        });
+        return this.prisma.textoGuia.findMany({});
     }
 
-    // Obtener una guía específica por su ID
     async findOneGuide(id: number): Promise<TextoGuia> {
         const guide = await this.prisma.textoGuia.findUnique({
             where: { id },
@@ -42,6 +40,14 @@ export class TextoGuiaService {
         }
 
         return guide;
+    }
+
+    async findGuidesByNivel(nivelId: number): Promise<TextoGuia[]> {
+        return this.prisma.textoGuia.findMany({
+            where: {
+                nivelId: nivelId,
+            },
+        });
     }
 
 
