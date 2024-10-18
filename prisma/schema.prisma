@@ -14,17 +14,17 @@ datasource db {
 }
 
 model Nivel {
-  id Int @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   textosGuias TextoGuia[]
 }
 
 model TextoGuia {
-  id    Int    @id @default(autoincrement())
-  title String
-  desc  String
-  cards Card[]
+  id      Int    @id @default(autoincrement())
+  title   String
+  desc    String
+  cards   Card[]
   nivelId Int?
-  nivel    Nivel? @relation(fields: [nivelId], references: [id], onDelete: Cascade)
+  nivel   Nivel? @relation(fields: [nivelId], references: [id], onDelete: Cascade)
 }
 
 model Card {
@@ -34,4 +34,12 @@ model Card {
   imageUrl String?
   guideId  Int
   guide    TextoGuia @relation(fields: [guideId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 }
