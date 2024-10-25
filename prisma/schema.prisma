@@ -19,14 +19,38 @@ model Nivel {
 }
 
 model Leccion {
-  id          Int      @id @default(autoincrement())
-  title       String
-  desc        String
-  imgUrl      String?  
-  tipo        String    
-  nivelId     Int?
-  nivel       Nivel?    @relation(fields: [nivelId], references: [id], onDelete: Cascade)
-  cards       Card[]    
+  id            Int          @id @default(autoincrement())
+  title         String
+  desc          String
+  imgUrl        String?  
+  tipo          String    
+  nivelId       Int?
+  nivel         Nivel?       @relation(fields: [nivelId], references: [id], onDelete: Cascade)
+  cards         Card[]    
+  cuestionario  Cuestionario? @relation(fields: [cuestionarioId], references: [id])
+  cuestionarioId Int?       @unique 
+}
+
+model Cuestionario {
+  id            Int          @id @default(autoincrement())
+  leccion       Leccion?     @relation
+  preguntas     Pregunta[]    
+}
+
+model Pregunta {
+  id             Int          @id @default(autoincrement())
+  texto          String       
+  cuestionarioId Int          
+  cuestionario   Cuestionario @relation(fields: [cuestionarioId], references: [id], onDelete: Cascade)
+  opciones       Opcion[]     
+}
+
+model Opcion {
+  id             Int          @id @default(autoincrement())
+  texto          String       
+  esCorrecta     Boolean      
+  preguntaId     Int          
+  pregunta       Pregunta     @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
 }
 
 model Card {
@@ -37,6 +61,8 @@ model Card {
   leccionId  Int
   leccion  Leccion @relation(fields: [leccionId], references: [id], onDelete: Cascade)
 }
+
+
 
 model User {
   id        Int      @id @default(autoincrement())

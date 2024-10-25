@@ -53,10 +53,14 @@ export class LeccionService {
         return leccion;
     }
 
-    async findLeccionesByNivel(nivelId: number): Promise<Leccion[]> {
+    async findLeccionesByNivel(nivelId: number): Promise<Pick<Leccion, 'id' | 'title' | 'desc'>[]> {
         return this.prisma.leccion.findMany({
             where: { nivelId },
-            include: { cards: true },
+            select: {
+                id: true,
+                title: true,
+                desc: true,
+            },
         });
     }
 }
