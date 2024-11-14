@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Param } from '@nestjs/common';
 import { CuestionarioService } from './cuestionario.service';
-import { CreateCuestionarioDto } from './create-cuestionario.dto';
+import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './create-cuestionario.dto';
 
 @Controller('cuestionarios')
 export class CuestionarioController {
@@ -19,5 +19,12 @@ export class CuestionarioController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.cuestionarioService.findOne(+id);
+  }
+
+  @Post('completar')
+  async registrarCuestionarioCompletado(
+    @Body() data: CreateCuestionarioCompletadoDto,
+  ) {
+    return this.cuestionarioService.registrarCuestionarioCompletado(data);
   }
 }

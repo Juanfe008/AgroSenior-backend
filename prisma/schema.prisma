@@ -14,60 +14,98 @@ datasource db {
 }
 
 model Nivel {
-  id          Int          @id @default(autoincrement())
-  lecciones   Leccion[]
+  id        Int       @id @default(autoincrement())
+  lecciones Leccion[]
 }
 
 model Leccion {
-  id            Int          @id @default(autoincrement())
-  title         String
-  desc          String
-  imgUrl        String?  
-  tipo          String    
-  nivelId       Int?
-  nivel         Nivel?       @relation(fields: [nivelId], references: [id], onDelete: Cascade)
-  cards         Card[]    
-  cuestionario  Cuestionario? @relation(fields: [cuestionarioId], references: [id])
-  cuestionarioId Int?       @unique 
+  id             Int           @id @default(autoincrement())
+  title          String
+  desc           String
+  imgUrl         String?
+  tipo           String
+  nivelId        Int?
+  nivel          Nivel?        @relation(fields: [nivelId], references: [id], onDelete: Cascade)
+  cards          Card[]
+  cuestionario   Cuestionario? @relation(fields: [cuestionarioId], references: [id])
+  cuestionarioId Int?          @unique
 }
 
 model Cuestionario {
-  id            Int          @id @default(autoincrement())
-  leccion       Leccion?     @relation
-  preguntas     Pregunta[]    
+  id          Int                      @id @default(autoincrement())
+  leccion     Leccion?                 @relation
+  preguntas   Pregunta[]
+  completados CuestionarioCompletado[]
 }
 
 model Pregunta {
   id             Int          @id @default(autoincrement())
-  texto          String       
-  cuestionarioId Int          
+  texto          String
+  cuestionarioId Int
   cuestionario   Cuestionario @relation(fields: [cuestionarioId], references: [id], onDelete: Cascade)
-  opciones       Opcion[]     
+  opciones       Opcion[]
 }
 
 model Opcion {
-  id             Int          @id @default(autoincrement())
-  texto          String       
-  esCorrecta     Boolean      
-  preguntaId     Int          
-  pregunta       Pregunta     @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  texto      String
+  esCorrecta Boolean
+  preguntaId Int
+  pregunta   Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
 }
 
 model Card {
-  id       Int       @id @default(autoincrement())
-  title    String
-  content  String
-  imageUrl String?
-  leccionId  Int
-  leccion  Leccion @relation(fields: [leccionId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String
+  imageUrl  String?
+  leccionId Int
+  leccion   Leccion @relation(fields: [leccionId], references: [id], onDelete: Cascade)
 }
 
-
-
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+  id                       Int                      @id @default(autoincrement())
+  username                 String                   @unique
+  email                    String                   @unique
+  password                 String
+  createdAt                DateTime                 @default(now())
+  exp                      Int                      @default(0)
+  posts                    Post[]
+  postLikes                PostLike[]
+  cuestionariosCompletados CuestionarioCompletado[]
+}
+
+model CuestionarioCompletado {
+  id             Int          @id @default(autoincrement())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
+  cuestionario   Cuestionario @relation(fields: [cuestionarioId], references: [id], onDelete: Cascade)
+  cuestionarioId Int
+  completadoEn   DateTime     @default(now())
+
+  @@unique([userId, cuestionarioId])
+}
+
+model Post {
+  id           Int        @id @default(autoincrement())
+  title        String
+  content      String
+  imageUrl     String?
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  parentPost   Post?      @relation("ReplyRelation", fields: [parentPostId], references: [id], onDelete: Cascade)
+  parentPostId Int?
+  replies      Post[]     @relation("ReplyRelation")
+  likes        PostLike[]
+}
+
+model PostLike {
+  id     Int  @id @default(autoincrement())
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@unique([postId, userId])
 }

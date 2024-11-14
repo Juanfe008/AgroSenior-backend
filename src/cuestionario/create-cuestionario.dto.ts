@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsInt } from 'class-validator';
 
 export class CreateCuestionarioDto {
   @IsNotEmpty()
@@ -13,4 +14,14 @@ export class CreateCuestionarioDto {
       esCorrecta: boolean;
     }[];
   }[];
+}
+
+export class CreateCuestionarioCompletadoDto {
+  @IsInt()
+  userId: number;
+
+  @IsInt()
+  cuestionarioId: number;
+
+  expGanada: number;
 }
