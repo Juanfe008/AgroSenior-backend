@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './create-cuestionario.dto';
+import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './cuestionario.dto';
 
 @Injectable()
 export class CuestionarioService {
