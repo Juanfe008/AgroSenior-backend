@@ -70,9 +70,12 @@ model User {
   password                 String
   createdAt                DateTime                 @default(now())
   exp                      Int                      @default(0)
+  nivel                    Int                      @default(1) 
   posts                    Post[]
   postLikes                PostLike[]
   cuestionariosCompletados CuestionarioCompletado[]
+  actividadesCompletadas   ActividadCompletada[]    
+  huerto                   Huerto?                  @relation
 }
 
 model CuestionarioCompletado {
@@ -108,4 +111,64 @@ model PostLike {
   userId Int
 
   @@unique([postId, userId])
+}
+
+model Actividad {
+  id          Int                  @id @default(autoincrement())
+  title       String
+  desc        String
+  nivelMin    Int                  
+  tipo        String         @default("virtual")     
+  exp         Int            @default(10)      
+  completadas ActividadCompletada[] 
+}
+
+model ActividadCompletada {
+  id           Int        @id @default(autoincrement())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  actividad    Actividad  @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+  actividadId  Int
+  completadoEn DateTime   @default(now())
+
+  @@unique([userId, actividadId]) 
+}
+
+model Huerto {
+  id           Int       @id @default(autoincrement())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int       @unique
+  light        Int       @default(50)
+  water        Int       @default(50)
+  nutrients    Int       @default(50)
+  plants       Plant[]   // Relación uno a muchos con Plant
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model PlantType {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  light     Int
+  water     Int
+  nutrients Int
+  images    String[]  
+  plants    Plant[]   
+}
+
+model Plant {
+  id           Int       @id @default(autoincrement())
+  huerto       Huerto    @relation(fields: [huertoId], references: [id], onDelete: Cascade)
+  huertoId     Int
+  type         PlantType @relation(fields: [plantTypeId], references: [id])
+  plantTypeId  Int       // Campo para la relación con PlantType
+  growthStage  Int       @default(0) // Etapa de crecimiento (0 = semilla, 1 = crecimiento, 2 = madura, etc.)
+  plantHealth  Int       @default(100)
+  positionX    Int       // Posición X en el grid
+  positionY    Int       // Posición Y en el grid
+  plantedAt    DateTime  @default(now()) // Fecha de siembra
+  lastWatered  DateTime? // Última vez que se regó
+  lastHarvested DateTime? // Última vez que se cosechó
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
