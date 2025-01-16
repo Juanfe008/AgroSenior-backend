@@ -1,10 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './cuestionario.dto';
+import { ActividadesService } from 'src/actividades/actividades.service';
 
 @Injectable()
 export class CuestionarioService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService,
+    private readonly actividadesService: ActividadesService,
+  ) { }
 
   async create(createCuestionarioDto: CreateCuestionarioDto) {
     const { leccionId, preguntas } = createCuestionarioDto;
@@ -89,7 +92,7 @@ export class CuestionarioService {
 
   async registrarCuestionarioCompletado(data: CreateCuestionarioCompletadoDto) {
     const { userId, cuestionarioId, expGanada } = data;
-  
+
     const completado = await this.prisma.cuestionarioCompletado.findUnique({
       where: {
         userId_cuestionarioId: {
@@ -98,11 +101,11 @@ export class CuestionarioService {
         },
       },
     });
-  
+
     if (completado) {
       throw new BadRequestException('Este cuestionario ya ha sido completado por el usuario.');
     }
-  
+
     await this.prisma.cuestionarioCompletado.create({
       data: {
         userId,
@@ -110,7 +113,9 @@ export class CuestionarioService {
         completadoEn: new Date(),
       },
     });
-  
+    
+    this.actividadesService.completeActivity(userId, 3)
+
     const usuarioActualizado = await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -119,7 +124,7 @@ export class CuestionarioService {
         },
       },
     });
-  
+
     return {
       message: `Cuestionario completado y ${expGanada} puntos de experiencia otorgados.`,
       usuario: usuarioActualizado,

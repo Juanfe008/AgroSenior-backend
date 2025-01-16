@@ -2,18 +2,26 @@ import { Injectable, Delete } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreatePostDto, RemovePostLikeDto, UpdatePostDto } from './foro.dto';
 import { CreatePostLikeDto } from './foro.dto';
+import { ActividadesService } from '../actividades/actividades.service';
 
 @Injectable()
 export class ForoService {
 
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService,
+        private readonly actividadesService: ActividadesService,
+    ) { }
 
     async createPost(createPostDto: CreatePostDto) {
-        return this.prisma.post.create({
+        const post = await this.prisma.post.create({
             data: {
-                ...createPostDto
+                ...createPostDto,
+                userId: createPostDto.userId,
             },
         });
+
+        await this.actividadesService.completeActivity(createPostDto.userId, 1);
+
+        return post;
     }
 
     async getPosts(userId: number) {
@@ -50,20 +58,20 @@ export class ForoService {
 
     async updatePost(postId: number, updatePostDto: UpdatePostDto) {
         const post = await this.prisma.post.findUnique({
-          where: { id: postId },
+            where: { id: postId },
         });
-    
+
         if (!post) {
-          throw new Error('Post no encontrado');
+            throw new Error('Post no encontrado');
         }
-    
+
         const updatedPost = await this.prisma.post.update({
-          where: { id: postId },
-          data: updatePostDto,
+            where: { id: postId },
+            data: updatePostDto,
         });
-    
+
         return updatedPost;
-      }
+    }
 
     async deletePost(postId: number, userId: number) {
         const post = await this.prisma.post.findUnique({

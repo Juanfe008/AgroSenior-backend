@@ -30,6 +30,7 @@ export class UsersService {
         username: true,
         email: true,
         exp: true,
+        nivel: true
       },
     });
 
