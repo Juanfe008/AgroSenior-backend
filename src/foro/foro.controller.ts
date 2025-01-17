@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Get, Delete, Param, ParseIntPipe, Query, Put } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, ParseIntPipe, Query, Put, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ForoService } from './foro.service';
 import { CreatePostDto, CreatePostLikeDto, RemovePostLikeDto, UpdatePostDto } from './foro.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Foro') 
 @Controller('foro')
@@ -11,11 +12,15 @@ export class ForoController {
   @Post('posts')
   @ApiOperation({ summary: 'Crear un nuevo post en el foro' })
   @ApiBody({
-    description: 'Datos necesarios para crear un post',
+    description: 'Datos necesarios para crear un post, incluyendo un archivo opcional',
     type: CreatePostDto,
   })
-  async createPost(@Body() createPostDto: CreatePostDto) {
-    return this.foroService.createPost(createPostDto);
+  @UseInterceptors(FileInterceptor('file')) 
+  async createPost(
+    @Body() createPostDto: CreatePostDto,
+    @UploadedFile() file?: Express.Multer.File, 
+  ) {
+    return this.foroService.createPost(createPostDto, file);
   }
 
   @Get('posts')

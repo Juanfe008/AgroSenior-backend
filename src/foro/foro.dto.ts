@@ -19,15 +19,6 @@ export class CreatePostDto {
   content: string;
 
   @ApiProperty({
-    description: 'URL de una imagen opcional para el post',
-    example: 'https://example.com/image.jpg',
-    required: false,
-  })
-  @IsOptional()
-  @IsUrl()
-  imageUrl?: string;
-
-  @ApiProperty({
     description: 'ID del post padre si este post es una respuesta',
     example: null,
     required: false,
@@ -43,6 +34,15 @@ export class CreatePostDto {
   @IsNotEmpty()
   @IsInt()
   userId: number;
+
+  @ApiProperty({
+    description: 'Archivo de imagen opcional para el post',
+    type: 'string',
+    format: 'binary',
+    required: false,
+  })
+  @IsOptional()
+  file?: Express.Multer.File;
 }
 
 export class UpdatePostDto {

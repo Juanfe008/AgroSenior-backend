@@ -3,24 +3,34 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreatePostDto, RemovePostLikeDto, UpdatePostDto } from './foro.dto';
 import { CreatePostLikeDto } from './foro.dto';
 import { ActividadesService } from '../actividades/actividades.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ForoService {
 
     constructor(private readonly prisma: PrismaService,
         private readonly actividadesService: ActividadesService,
+        private readonly cloudinaryService: CloudinaryService,
     ) { }
 
-    async createPost(createPostDto: CreatePostDto) {
+    async createPost(createPostDto: CreatePostDto, file?: Express.Multer.File) {
+        let imageUrl = null;
+    
+        if (file) {
+          const uploadResult = await this.cloudinaryService.uploadFile(file);
+          imageUrl = uploadResult.url; 
+        }
+    
         const post = await this.prisma.post.create({
-            data: {
-                ...createPostDto,
-                userId: createPostDto.userId,
-            },
+          data: {
+            ...createPostDto,
+            userId: parseInt(createPostDto.userId.toString()),
+            imageUrl,
+          },
         });
-
-        await this.actividadesService.completeActivity(createPostDto.userId, 1);
-
+    
+        await this.actividadesService.completeActivity(parseInt(createPostDto.userId.toString()), 1);
+    
         return post;
     }
 
