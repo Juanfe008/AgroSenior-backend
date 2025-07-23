@@ -234,8 +234,3 @@ FOREIGN KEY ("huertoId") REFERENCES "Huerto"("id") ON DELETE CASCADE ON UPDATE C
 ALTER TABLE "Plant" ADD CONSTRAINT "Plant_plantTypeId_fkey" 
 FOREIGN KEY ("plantTypeId") REFERENCES "PlantType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Insertar los datos iniciales en la tabla PlantType
-INSERT INTO "PlantType" ("name", "light", "water", "nutrients", "images") VALUES
-('Planta 1', 50, 50, 50, ARRAY['/images/huerto/maceta-semilla.png', '/images/huerto/maceta-semilla.png', '/images/huerto/Maceta-planta-1.png']),
-('Planta 2', 50, 80, 60, ARRAY['/images/huerto/maceta-semilla.png', '/images/huerto/maceta-semilla.png', '/images/huerto/Maceta-planta-2.png']),
-('Planta 3', 70, 60, 70, ARRAY['/images/huerto/maceta-semilla.png', '/images/huerto/maceta-semilla.png', '/images/huerto/Maceta-planta-3.png']);

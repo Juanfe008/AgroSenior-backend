@@ -32,10 +32,12 @@ export class ActividadesService {
       completada: actividad.completadas.length > 0, 
       exp: actividad.exp,
       tipo: actividad.tipo,
+      evento: actividad.evento,
+      imageUrl: actividad.imageUrl,
     }));
   }
 
-  async createActivity(data: { title: string; desc: string; nivelMin: number, exp: number, tipo: string }) {
+  async createActivity(data: { title: string; desc: string; nivelMin: number; exp: number; tipo: string; evento?: string; imageUrl?: string }) {
     return this.prisma.actividad.create({
       data,
     });
@@ -70,5 +72,58 @@ export class ActividadesService {
         },
       });
     }
+  }  
+
+  async completarActividadesPorEvento(evento: string, userId: number) {
+    const actividades = await this.prisma.actividad.findMany({
+      where: { evento },
+    });
+  
+    for (const actividad of actividades) {
+      const yaCompletada = await this.prisma.actividadCompletada.findFirst({
+        where: { actividadId: actividad.id, userId },
+      });
+  
+      if (!yaCompletada) {
+        await this.prisma.actividadCompletada.create({
+          data: {
+            actividadId: actividad.id,
+            userId,  
+          },
+        });
+  
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: {
+            exp: {
+              increment: actividad.exp,
+            },
+          },
+        });
+      }
+    }
+  }
+
+  async findAll() {
+    return this.prisma.actividad.findMany();
+  }
+  
+  async findOne(id: number) {
+    return this.prisma.actividad.findUnique({
+      where: { id },
+    });
+  }
+  
+  async update(id: number, data: { title?: string; desc?: string; nivelMin?: number; exp?: number; tipo?: string; evento?: string; imageUrl?: string }) {
+    return this.prisma.actividad.update({
+      where: { id },
+      data,
+    });
+  }
+  
+  async remove(id: number) {
+    return this.prisma.actividad.delete({
+      where: { id },
+    });
   }  
 }

@@ -22,13 +22,39 @@ model Leccion {
   id             Int           @id @default(autoincrement())
   title          String
   desc           String
-  imgUrl         String?
   tipo           String
+  orden          Int           @default(0)
   nivelId        Int?
   nivel          Nivel?        @relation(fields: [nivelId], references: [id], onDelete: Cascade)
   cards          Card[]
+  infografia     Infografia?   @relation(fields: [infografiaId], references: [id])
+  infografiaId   Int?          @unique
   cuestionario   Cuestionario? @relation(fields: [cuestionarioId], references: [id])
   cuestionarioId Int?          @unique
+}
+
+model Infografia {
+  id              Int         @id @default(autoincrement())
+  leccion         Leccion?    @relation
+  leccionId       Int?        @unique
+  backgroundImage String?
+  elementos       InfografiaElemento[]
+}
+
+model InfografiaElemento {
+  id           Int         @id @default(autoincrement())
+  infografia   Infografia  @relation(fields: [infografiaId], references: [id])
+  infografiaId Int
+  tipo         String
+  titulo       String?
+  posicionX    Int
+  posicionY    Int
+  contenido    Json
+  estilo       Json?
+  interactivo  Boolean     @default(true)
+  visible      Boolean     @default(true)
+  orden        Int         @default(0)
+  @@index([infografiaId, orden])
 }
 
 model Cuestionario {
@@ -59,6 +85,7 @@ model Card {
   title     String
   content   String
   imageUrl  String?
+  orden     Int     @default(0) // Orden de aparición en la lección
   leccionId Int
   leccion   Leccion @relation(fields: [leccionId], references: [id], onDelete: Cascade)
 }
@@ -76,6 +103,9 @@ model User {
   cuestionariosCompletados CuestionarioCompletado[]
   actividadesCompletadas   ActividadCompletada[]    
   huerto                   Huerto?                  @relation
+  points  Int      @default(0) // Puntos del usuario
+  insignias                UserBadge[]              
+  isAdmin                  Boolean                  @default(false)
 }
 
 model CuestionarioCompletado {
@@ -120,6 +150,8 @@ model Actividad {
   nivelMin    Int                  
   tipo        String         @default("virtual")     
   exp         Int            @default(10)      
+  evento      String?
+  imageUrl    String?       
   completadas ActividadCompletada[] 
 }
 
@@ -135,40 +167,78 @@ model ActividadCompletada {
 }
 
 model Huerto {
-  id           Int       @id @default(autoincrement())
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       Int       @unique
-  light        Int       @default(50)
-  water        Int       @default(50)
-  nutrients    Int       @default(50)
-  plants       Plant[]   // Relación uno a muchos con Plant
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             Int          @id @default(autoincrement())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int          @unique
+  controls       ControlFila[] // Relación uno a muchos con ControlFila
+  simulationTime DateTime     @default(now())
+  plants         Plant[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ControlFila {
+  id        Int    @id @default(autoincrement())
+  filaIndex Int    // Índice de la fila (único por huerto)
+  light     Int    // Valor de luz (0-100)
+  water     Int    // Valor de agua (0-100)
+  nutrients Int    // Valor de nutrientes (0-100)
+  huerto    Huerto @relation(fields: [huertoId], references: [id], onDelete: Cascade)
+  huertoId  Int    // Foreign key al Huerto
+
+  @@unique([huertoId, filaIndex]) // Asegura que el índice de fila sea único por huerto
 }
 
 model PlantType {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  light     Int
-  water     Int
-  nutrients Int
-  images    String[]  
-  plants    Plant[]   
+  id             Int       @id @default(autoincrement())
+  name           String    @unique
+  light          Int
+  water          Int
+  nutrients      Int
+  growthDuration Int      @default(24) // Duración del crecimiento en horas
+  images         String[]  
+  plants         Plant[]   
+  precio         Int       @default(0)
 }
 
 model Plant {
-  id           Int       @id @default(autoincrement())
-  huerto       Huerto    @relation(fields: [huertoId], references: [id], onDelete: Cascade)
-  huertoId     Int
-  type         PlantType @relation(fields: [plantTypeId], references: [id])
-  plantTypeId  Int       // Campo para la relación con PlantType
-  growthStage  Int       @default(0) // Etapa de crecimiento (0 = semilla, 1 = crecimiento, 2 = madura, etc.)
-  plantHealth  Int       @default(100)
-  positionX    Int       // Posición X en el grid
-  positionY    Int       // Posición Y en el grid
-  plantedAt    DateTime  @default(now()) // Fecha de siembra
-  lastWatered  DateTime? // Última vez que se regó
-  lastHarvested DateTime? // Última vez que se cosechó
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                 Int       @id @default(autoincrement())
+  huerto             Huerto     @relation(fields: [huertoId], references: [id], onDelete: Cascade)
+  huertoId           Int
+  type               PlantType  @relation(fields: [plantTypeId], references: [id])
+  plantTypeId        Int        // Campo para la relación con PlantType
+  growthStage        Int        @default(0) // Etapa de crecimiento (0 = semilla, 1 = crecimiento, 2 = madura, etc.)
+  plantHealth        Int        @default(100)
+  positionX          Int        // Posición X en el grid
+  positionY          Int        // Posición Y en el grid
+  growthStartTime    DateTime   @default(now()) // Momento en que la planta comenzó a crecer
+  lastGrowthUpdate   DateTime   @default(now()) // Última vez que se actualizó el crecimiento
+  growthDuration     Int        @default(24) // Duración del crecimiento en horas (por defecto 24 horas)
+  fruitProductionTime Int       @default(0) // Tiempo de producción de frutos en horas
+  hasFruits          Boolean    @default(false) // Indica si la planta tiene frutos listos para cosechar
+  status             String     @default("alive") // Estado de la planta (alive, dead)
+  plantedAt          DateTime   @default(now()) // Fecha de siembra
+  lastWatered        DateTime?  // Última vez que se regó
+  lastHarvested      DateTime?  // Última vez que se cosechó
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+model Badge {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  imagen      String   // Ruta de la imagen de la insignia
+  descripcion String?  // Descripción opcional de la insignia
+  users       UserBadge[] // Relación muchos a muchos con usuarios
+}
+
+model UserBadge {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  Int
+  badge    Badge  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  obtenidoEn DateTime @default(now()) // Fecha en que se obtuvo la insignia
+
+  @@unique([userId, badgeId]) // Asegura que un usuario no pueda obtener la misma insignia más de una vez
 }

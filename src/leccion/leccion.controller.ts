@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 import { LeccionService } from './leccion.service';
 import { CreateLeccionDto } from './leccion.dto';
@@ -25,15 +25,12 @@ export class LeccionController {
     return this.leccionService.findOneLeccion(+id);
   }
 
-  @Get('nivel/:nivelId')
+  @Get('nivel/:nivelId/usuario/:userId')
   @ApiOperation({ summary: 'Obtener lecciones por nivel' })
-  @ApiParam({
-    name: 'nivelId',
-    description: 'ID del nivel al que pertenecen las lecciones',
-    example: '2',
-  })
-  findLeccionesByNivel(@Param('nivelId') nivelId: string) {
-    return this.leccionService.findLeccionesByNivel(+nivelId);
+  @ApiParam({ name: 'nivelId', description: 'ID del nivel', example: '2' })
+  @ApiParam({ name: 'userId', description: 'ID del usuario', example: '5' })
+  findLeccionesByNivel(@Param('nivelId') nivelId: string, @Param('userId') userId: string) {
+    return this.leccionService.findLeccionesByNivel(+nivelId, +userId);
   }
 
   @Post()
@@ -41,5 +38,28 @@ export class LeccionController {
   @ApiBody({ type: CreateLeccionDto })
   createLeccion(@Body() createLeccionDto: CreateLeccionDto) {
     return this.leccionService.createLeccion(createLeccionDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar una lección existente' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la lección a actualizar',
+    example: '1',
+  })
+  @ApiBody({ type: CreateLeccionDto })
+  updateLeccion(@Param('id') id: string, @Body() updateLeccionDto: CreateLeccionDto) {
+    return this.leccionService.updateLeccion(+id, updateLeccionDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar una lección' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID de la lección a eliminar',
+    example: '1',
+  })
+  deleteLeccion(@Param('id') id: string) {
+    return this.leccionService.deleteLeccion(+id);
   }
 }

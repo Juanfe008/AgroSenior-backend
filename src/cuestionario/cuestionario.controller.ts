@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Put, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 import { CuestionarioService } from './cuestionario.service';
 import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './cuestionario.dto';
@@ -45,5 +45,31 @@ export class CuestionarioController {
     @Body() data: CreateCuestionarioCompletadoDto,
   ) {
     return this.cuestionarioService.registrarCuestionarioCompletado(data);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar un cuestionario existente' })
+  @ApiParam({
+    name: 'id', 
+    description: 'ID del cuestionario a actualizar',
+    example: '1',
+  })
+  @ApiBody({
+    description: 'Datos para actualizar el cuestionario',
+    type: CreateCuestionarioDto,
+  })
+  update(@Param('id') id: string, @Body() updateCuestionarioDto: CreateCuestionarioDto) {
+    return this.cuestionarioService.update(+id, updateCuestionarioDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un cuestionario' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID del cuestionario a eliminar',
+    example: '1',
+  })
+  remove(@Param('id') id: string) {
+    return this.cuestionarioService.remove(+id);
   }
 }

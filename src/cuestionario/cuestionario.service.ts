@@ -1,12 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateCuestionarioDto, CreateCuestionarioCompletadoDto } from './cuestionario.dto';
 import { ActividadesService } from 'src/actividades/actividades.service';
+import { UsersService} from 'src/users/users.service'
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class CuestionarioService {
   constructor(private readonly prisma: PrismaService,
-    private readonly actividadesService: ActividadesService,
+    private readonly usersService: UsersService, 
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async create(createCuestionarioDto: CreateCuestionarioDto) {
@@ -92,7 +95,7 @@ export class CuestionarioService {
 
   async registrarCuestionarioCompletado(data: CreateCuestionarioCompletadoDto) {
     const { userId, cuestionarioId, expGanada } = data;
-
+  
     const completado = await this.prisma.cuestionarioCompletado.findUnique({
       where: {
         userId_cuestionarioId: {
@@ -101,11 +104,11 @@ export class CuestionarioService {
         },
       },
     });
-
+  
     if (completado) {
       throw new BadRequestException('Este cuestionario ya ha sido completado por el usuario.');
     }
-
+  
     await this.prisma.cuestionarioCompletado.create({
       data: {
         userId,
@@ -113,21 +116,82 @@ export class CuestionarioService {
         completadoEn: new Date(),
       },
     });
-    
-    this.actividadesService.completeActivity(userId, 3)
+  
+    this.eventEmitter.emit('user.completedCuestionario', { userId });
+  
+    const usuarioActualizado = await this.usersService.addExp(userId, expGanada);
+  
+    return {
+      message: `Cuestionario completado y ${expGanada} puntos de experiencia otorgados.`,
+      user: usuarioActualizado,
+    };
+  }    
 
-    const usuarioActualizado = await this.prisma.user.update({
-      where: { id: userId },
+  async update(id: number, updateCuestionarioDto: CreateCuestionarioDto) {
+    const { leccionId, preguntas } = updateCuestionarioDto;
+
+    // Verificar si el cuestionario existe
+    const cuestionarioExistente = await this.prisma.cuestionario.findUnique({
+      where: { id },
+    });
+
+    if (!cuestionarioExistente) {
+      throw new NotFoundException('Cuestionario no encontrado');
+    }
+
+    // Eliminar preguntas y opciones existentes
+    await this.prisma.cuestionario.update({
+      where: { id },
       data: {
-        exp: {
-          increment: expGanada,
+        preguntas: {
+          deleteMany: {},
         },
       },
     });
 
+    // Actualizar el cuestionario con las nuevas preguntas y opciones
+    const cuestionarioActualizado = await this.prisma.cuestionario.update({
+      where: { id },
+      data: {
+        leccion: { connect: { id: leccionId } },
+        preguntas: {
+          create: preguntas.map(pregunta => ({
+            texto: pregunta.texto,
+            opciones: {
+              create: pregunta.opciones,
+            },
+          })),
+        },
+      },
+      include: {
+        preguntas: {
+          include: {
+            opciones: true,
+          },
+        },
+      },
+    });
+
+    return cuestionarioActualizado;
+  }
+
+  async remove(id: number) {
+    // Verificar si el cuestionario existe
+    const cuestionario = await this.prisma.cuestionario.findUnique({
+      where: { id },
+    });
+
+    if (!cuestionario) {
+      throw new NotFoundException('Cuestionario no encontrado');
+    }
+
+    // Eliminar el cuestionario y sus relaciones
+    await this.prisma.cuestionario.delete({
+      where: { id },
+    });
+
     return {
-      message: `Cuestionario completado y ${expGanada} puntos de experiencia otorgados.`,
-      usuario: usuarioActualizado,
+      message: 'Cuestionario eliminado exitosamente',
     };
   }
 }
